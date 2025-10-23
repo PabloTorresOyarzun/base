@@ -27,6 +27,32 @@
         </div>
     </footer>
 
+    <script>
+        // Helper para obtener el token CSRF de las cookies
+        function getCsrfToken() {
+            const name = 'csrf_token=';
+            const decodedCookie = decodeURIComponent(document.cookie);
+            const ca = decodedCookie.split(';');
+            for(let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(name) == 0) {
+                    return c.substring(name.length, c.length);
+                }
+            }
+            return '';
+        }
+
+        // Helper para agregar token CSRF a fetch requests
+        function fetchWithCsrf(url, options = {}) {
+            options.headers = options.headers || {};
+            options.headers['X-CSRF-Token'] = getCsrfToken();
+            return fetch(url, options);
+        }
+    </script>
+
     {% block extra_js %}{% endblock %}
 </body>
 </html>

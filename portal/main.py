@@ -3,13 +3,26 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
+from starlette_csrf import CSRFMiddleware
 import httpx
 import os
 from typing import Optional
 
 app = FastAPI(title="Portal")
 
+# Session middleware debe ir primero
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("SESSION_SECRET", "your-secret-key-change-in-production"))
+
+# CSRF middleware
+app.add_middleware(
+    CSRFMiddleware,
+    secret=os.getenv("SESSION_SECRET", "your-secret-key-change-in-production"),
+    cookie_name="csrf_token",
+    cookie_secure=False,  # Cambiar a True en producción con HTTPS
+    cookie_samesite="lax",
+    header_name="X-CSRF-Token"
+)
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
