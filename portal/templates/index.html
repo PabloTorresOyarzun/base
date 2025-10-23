@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Inicio de Sesión - Portal{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <h2>Bienvenido</h2>
+            <p>Acceso al Portal Empresarial</p>
+        </div>
+        
+        <div class="login-body">
+            <p class="login-description">
+                Para acceder al sistema, inicie sesión con sus credenciales corporativas.
+            </p>
+            
+            <a href="{{ auth_url }}" class="btn btn-primary">
+                Iniciar Sesión con Keycloak
+            </a>
+        </div>
+        
+        <div class="login-footer">
+            <p class="info-text">
+                Sistema de autenticación seguro mediante OAuth 2.0 / OpenID Connect
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

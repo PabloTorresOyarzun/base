@@ -1,0 +1,182 @@
+# ============================================================
+# ARCHIVOS DE ENTORNO Y CONFIGURACIÓN SENSIBLE
+# ============================================================
+.env
+.env.local
+.env.*.local
+*.env
+config/realm-config.json.backup
+
+# ============================================================
+# PYTHON
+# ============================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+*.pyc
+
+# Entornos virtuales
+venv/
+ENV/
+env/
+.venv
+
+# ============================================================
+# DOCKER
+# ============================================================
+docker-compose.override.yml
+.dockerignore
+
+# ============================================================
+# LOGS
+# ============================================================
+*.log
+logs/
+*.log.*
+
+# ============================================================
+# BASE DE DATOS
+# ============================================================
+*.db
+*.sqlite
+*.sqlite3
+
+# ============================================================
+# SISTEMAS OPERATIVOS
+# ============================================================
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# ============================================================
+# IDEs Y EDITORES
+# ============================================================
+# VSCode
+.vscode/
+*.code-workspace
+
+# JetBrains (PyCharm, IntelliJ, etc)
+.idea/
+*.iml
+*.ipr
+*.iws
+.idea_modules/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+Session.vim
+.netrwhist
+
+# ============================================================
+# BACKUPS Y TEMPORALES
+# ============================================================
+*.bak
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+.#*
+
+# ============================================================
+# CERTIFICADOS Y CLAVES
+# ============================================================
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+secrets/
+
+# ============================================================
+# NODE (si hubiera frontend adicional)
+# ============================================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# ============================================================
+# DOCUMENTACIÓN GENERADA
+# ============================================================
+docs/_build/
+site/
+
+# ============================================================
+# TESTING Y COVERAGE
+# ============================================================
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# ============================================================
+# JUPYTER NOTEBOOKS
+# ============================================================
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# ============================================================
+# ARCHIVOS ESPECÍFICOS DEL PROYECTO
+# ============================================================
+# Scripts de troubleshooting temporales
+TROUBLESHOOTING.md.backup
+FIX_*.md.backup
+
+# Datos de desarrollo
+data/
+uploads/
+downloads/
+
+# Archivos de configuración local
+config.local.yml
+kong-config.local.sh

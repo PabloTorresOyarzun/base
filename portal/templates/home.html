@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Portal{% endblock %}
+
+{% block nav %}
+<ul class="nav-list">
+    <li><a href="{{ base_path }}/logout" class="nav-link">Cerrar Sesión</a></li>
+</ul>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="welcome-section">
+        <h2>Panel de Control</h2>
+        <p class="user-info">
+            Usuario: <strong>{{ user.preferred_username or user.email }}</strong>
+        </p>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="dashboard-card">
+            <h3>Microservicios</h3>
+            <p>Gestión y monitoreo de microservicios del sistema.</p>
+            <div class="card-status">
+                <span class="status-badge status-ready">Disponible</span>
+            </div>
+        </div>
+
+        <div class="dashboard-card">
+            <h3>API Gateway</h3>
+            <p>Configuración y administración de Kong Gateway.</p>
+            <div class="card-status">
+                <span class="status-badge status-ready">Disponible</span>
+            </div>
+        </div>
+
+        <div class="dashboard-card">
+            <h3>Observabilidad</h3>
+            <p>Métricas, logs y trazas del sistema (Grafana, Prometheus).</p>
+            <div class="card-status">
+                <span class="status-badge status-ready">Disponible</span>
+            </div>
+        </div>
+
+        <div class="dashboard-card">
+            <h3>Base de Datos</h3>
+            <p>Administración de PostgreSQL y pgAdmin.</p>
+            <div class="card-status">
+                <span class="status-badge status-ready">Disponible</span>
+            </div>
+        </div>
+
+        <div class="dashboard-card">
+            <h3>Mensajería</h3>
+            <p>Gestión de colas y mensajes en RabbitMQ.</p>
+            <div class="card-status">
+                <span class="status-badge status-ready">Disponible</span>
+            </div>
+        </div>
+
+        <div class="dashboard-card">
+            <h3>Almacenamiento</h3>
+            <p>Gestión de objetos en MinIO.</p>
+            <div class="card-status">
+                <span class="status-badge status-ready">Disponible</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-section">
+        <div class="info-card">
+            <h3>Información del Usuario</h3>
+            <dl class="info-list">
+                <dt>Email:</dt>
+                <dd>{{ user.email or 'No disponible' }}</dd>
+                
+                <dt>Usuario:</dt>
+                <dd>{{ user.preferred_username or 'No disponible' }}</dd>
+                
+                <dt>Nombre:</dt>Fhome
+                <dd>{{ user.name or 'No disponible' }}</dd>
+            </dl>
+        </div>
+    </div>
+</div>
+{% endblock %}

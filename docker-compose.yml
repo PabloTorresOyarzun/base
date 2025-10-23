@@ -1,0 +1,512 @@
+services:
+  # ============================================================
+  # API GATEWAY - KONG
+  # ============================================================
+  
+  # Migración inicial de base de datos de Kong
+  kong-migration:
+    image: kong/kong:latest
+    container_name: kong-migration
+    command: kong migrations bootstrap
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: kong-db
+      KONG_PG_USER: ${KONG_DB_USER}
+      KONG_PG_PASSWORD: ${KONG_DB_PASSWORD}
+      KONG_PG_DATABASE: ${KONG_DB_NAME}
+    networks:
+      - database_network
+    depends_on:
+      kong-db:
+        condition: service_healthy
+    restart: on-failure
+
+  # Kong API Gateway
+  kong:
+    image: kong/kong:latest
+    container_name: kong
+    ports:
+      - "8000:8000"   # Proxy HTTP
+      - "8443:8443"   # Proxy HTTPS
+      - "8001:8001"   # Admin API
+      - "8002:8002"   # Admin GUI
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: kong-db
+      KONG_PG_USER: ${KONG_DB_USER}
+      KONG_PG_PASSWORD: ${KONG_DB_PASSWORD}
+      KONG_PG_DATABASE: ${KONG_DB_NAME}
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+      KONG_ADMIN_GUI_LISTEN: 0.0.0.0:8002
+      KONG_ADMIN_GUI_URL: http://localhost:8002
+    networks:
+      - public_network
+      - database_network
+    depends_on:
+      kong-db:
+        condition: service_healthy
+      kong-migration:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "kong", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Configuración automática de rutas en Kong
+  kong-config:
+    image: curlimages/curl:latest
+    container_name: kong-config
+    volumes:
+      - ./config/kong-config.sh:/kong-config.sh
+    command: sh /kong-config.sh
+    networks:
+      - public_network
+    depends_on:
+      kong:
+        condition: service_healthy
+    restart: on-failure
+
+  # Base de datos PostgreSQL para Kong (solo acceso interno)
+  kong-db:
+    image: postgres:latest
+    container_name: kong-db
+    environment:
+      POSTGRES_USER: ${KONG_DB_USER}
+      POSTGRES_PASSWORD: ${KONG_DB_PASSWORD}
+      POSTGRES_DB: ${KONG_DB_NAME}
+    volumes:
+      - kong_data:/var/lib/postgresql
+    networks:
+      - database_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${KONG_DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================================
+  # AUTENTICACIÓN - KEYCLOAK
+  # ============================================================
+
+  # Keycloak Identity Provider
+  # Keycloak Identity Provider
+  keycloak:
+    image: keycloak/keycloak:latest
+    container_name: keycloak
+    ports:
+      - "8080:8080"   # Interfaz web de Keycloak
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/${KEYCLOAK_DB_NAME}
+      KC_DB_USERNAME: ${KEYCLOAK_DB_USER}
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_BOOTSTRAP_ADMIN_USERNAME}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_BOOTSTRAP_ADMIN_PASSWORD}
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_PORT: "8080"
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_STRICT_BACKCHANNEL: "false"
+      KC_HTTP_ENABLED: "true"
+    volumes:
+      - ./config/realm-config.json:/opt/keycloak/data/import/realm-config.json:ro
+    command: start-dev --import-realm
+    networks:
+      - public_network
+      - database_network
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+
+  # Base de datos PostgreSQL para Keycloak (solo acceso interno)
+  keycloak-db:
+    image: postgres:latest
+    container_name: keycloak-db
+    environment:
+      POSTGRES_USER: ${KEYCLOAK_DB_USER}
+      POSTGRES_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
+      POSTGRES_DB: ${KEYCLOAK_DB_NAME}
+    volumes:
+      - keycloak_data:/var/lib/postgresql
+    networks:
+      - database_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${KEYCLOAK_DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================================
+  # PORTAL WEB - FASTAPI
+  # ============================================================
+
+  portal:
+    build:
+      context: ./portal
+      dockerfile: Dockerfile
+    container_name: portal
+    environment:
+      SESSION_SECRET: ${SESSION_SECRET}
+      KEYCLOAK_URL_PUBLIC: ${KEYCLOAK_URL_PUBLIC}
+      KEYCLOAK_URL_INTERNAL: ${KEYCLOAK_URL_INTERNAL}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
+      REDIRECT_URI: ${REDIRECT_URI}
+      BASE_PATH: ${BASE_PATH}
+    networks:
+      - public_network
+    depends_on:
+      - keycloak
+      - kong
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8100/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================================
+  # BASE DE DATOS PRINCIPAL - POSTGRESQL
+  # ============================================================
+
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    networks:
+      - database_network
+      - public_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================================
+  # ADMINISTRACIÓN DE BASE DE DATOS - PGADMIN
+  # ============================================================
+
+  pgadmin:
+    image: dpage/pgadmin4:8.13
+    container_name: pgadmin
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - database_network
+      - public_network
+    depends_on:
+      - postgres
+      - kong-db
+      - keycloak-db
+
+  # ============================================================
+  # CACHE Y SESIONES - REDIS
+  # ============================================================
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+    networks:
+      - public_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================================
+  # SECRETS MANAGEMENT - VAULT
+  # ============================================================
+
+  # HashiCorp Vault para gestión de secretos
+  vault:
+    image: hashicorp/vault:latest
+    container_name: vault
+    ports:
+      - "8200:8200"   # API de Vault
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: ${VAULT_DEV_ROOT_TOKEN}
+      VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
+    networks:
+      - vault_network
+      - public_network
+    cap_add:
+      - IPC_LOCK
+    command: server -dev
+
+  # Inicializador automático de Vault con credenciales del .env
+  vault-init:
+    image: hashicorp/vault:latest
+    container_name: vault-init
+    environment:
+      VAULT_ADDR: http://vault:8200
+      VAULT_TOKEN: ${VAULT_DEV_ROOT_TOKEN}
+    command: >
+      sh -c "
+      sleep 5 &&
+      vault kv put secret/kong user=${KONG_DB_USER} password=${KONG_DB_PASSWORD} database=${KONG_DB_NAME} &&
+      vault kv put secret/keycloak user=${KEYCLOAK_DB_USER} password=${KEYCLOAK_DB_PASSWORD} database=${KEYCLOAK_DB_NAME} admin_user=${KC_BOOTSTRAP_ADMIN_USERNAME} admin_password=${KC_BOOTSTRAP_ADMIN_PASSWORD} &&
+      vault kv put secret/postgres user=${POSTGRES_USER} password=${POSTGRES_PASSWORD} database=${POSTGRES_DB} &&
+      vault kv put secret/redis password=${REDIS_PASSWORD} &&
+      vault kv put secret/grafana user=${GRAFANA_ADMIN_USER} password=${GRAFANA_ADMIN_PASSWORD} &&
+      vault kv put secret/rabbitmq user=${RABBITMQ_USER} password=${RABBITMQ_PASSWORD} &&
+      vault kv put secret/minio root_user=${MINIO_ROOT_USER} root_password=${MINIO_ROOT_PASSWORD} &&
+      vault kv put secret/pgadmin email=${PGADMIN_EMAIL} password=${PGADMIN_PASSWORD}
+      "
+    networks:
+      - vault_network
+    depends_on:
+      - vault
+    restart: on-failure
+
+  # ============================================================
+  # MESSAGE BROKER - RABBITMQ
+  # ============================================================
+
+  # RabbitMQ para mensajería asíncrona
+  rabbitmq:
+    image: rabbitmq:management
+    container_name: rabbitmq
+    user: "999:999"
+    ports:
+      - "5672:5672"   # Puerto AMQP
+      - "15672:15672" # Interfaz de administración
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+      RABBITMQ_ERLANG_COOKIE: "rabbitmq-cookie-secret"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - public_network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================================
+  # OBJECT STORAGE - MINIO
+  # ============================================================
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    ports:
+      - "9000:9000"   # API
+      - "9001:9001"   # Console
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - public_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================================
+  # NOTIFICATIONS - NTFY
+  # ============================================================
+
+  ntfy:
+    image: binwiederhier/ntfy:latest
+    container_name: ntfy
+    ports:
+      - "8888:80"     # HTTP
+    command: serve
+    volumes:
+      - ntfy_data:/var/cache/ntfy
+      - ntfy_config:/etc/ntfy
+    networks:
+      - public_network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--tries=1", "--spider", "http://localhost/v1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================================
+  # OBSERVABILIDAD - PLG STACK + TEMPO
+  # ============================================================
+
+  # Prometheus para métricas
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"   # Interfaz web de Prometheus
+    volumes:
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    configs:
+      - source: prometheus_config
+        target: /etc/prometheus/prometheus.yml
+    networks:
+      - monitoring_network
+      - public_network
+
+  # Loki para agregación de logs
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - monitoring_network
+    volumes:
+      - loki_data:/loki
+
+  # Promtail para recolección de logs de contenedores
+  promtail:
+    image: grafana/promtail:latest
+    container_name: promtail
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    command:
+      - '-config.file=/etc/promtail/config.yml'
+    configs:
+      - source: promtail_config
+        target: /etc/promtail/config.yml
+    networks:
+      - monitoring_network
+    depends_on:
+      - loki
+
+  # Tempo para tracing distribuido
+  tempo:
+    image: grafana/tempo:latest
+    container_name: tempo
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - tempo_data:/var/tempo
+    configs:
+      - source: tempo_config
+        target: /etc/tempo.yaml
+    networks:
+      - monitoring_network
+    ports:
+      - "3200:3200"   # Tempo HTTP
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+
+  # Grafana para visualización de métricas, logs y traces
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"   # Interfaz web de Grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      # Configuración para mitigar bloqueos de base de datos SQLite
+      GF_DATABASE_TYPE: sqlite3
+      GF_DATABASE_PATH: /var/lib/grafana/grafana.db
+      GF_DATABASE_LOCK_MODE: 1
+      GF_DATABASE_MAX_IDLE_CONN: 2
+      GF_DATABASE_MAX_OPEN_CONN: 0
+      GF_DATABASE_CONN_MAX_LIFETIME: 14400
+    volumes:
+      - grafana_data:/var/lib/grafana
+    configs:
+      - source: grafana_datasources
+        target: /etc/grafana/provisioning/datasources/datasources.yml
+    networks:
+      - monitoring_network
+      - public_network
+    depends_on:
+      - loki
+      - prometheus
+      - tempo
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+
+# ============================================================
+# CONFIGURACIONES EXTERNAS
+# ============================================================
+
+configs:
+  prometheus_config:
+    file: ./config/observability/prometheus.yml
+  
+  promtail_config:
+    file: ./config/observability/promtail.yml
+  
+  tempo_config:
+    file: ./config/observability/tempo.yml
+  
+  grafana_datasources:
+    file: ./config/observability/grafana-datasources.yml
+
+# ============================================================
+# REDES SEGMENTADAS
+# ============================================================
+
+networks:
+  # Red pública para servicios expuestos
+  public_network:
+    driver: bridge
+  
+  # Red interna para bases de datos (sin acceso directo desde fuera)
+  database_network:
+    driver: bridge
+    internal: true
+  
+  # Red para observabilidad
+  monitoring_network:
+    driver: bridge
+  
+  # Red para gestión de secretos
+  vault_network:
+    driver: bridge
+
+# ============================================================
+# VOLÚMENES PERSISTENTES
+# ============================================================
+
+volumes:
+  kong_data:
+  keycloak_data:
+  postgres_data:
+  redis_data:
+  loki_data:
+  grafana_data:
+  prometheus_data:
+  tempo_data:
+  rabbitmq_data:
+  minio_data:
+  ntfy_data:
+  ntfy_config:
+  pgadmin_data:
