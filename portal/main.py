@@ -133,6 +133,18 @@ async def fastapi_http_exception_handler(request: Request, exc: HTTPException):
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     user = get_current_user(request)
+    
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "base_path": BASE_PATH,
+        "authenticated": user is not None,
+        "user": user
+    })
+
+
+@app.get("/login")
+async def login(request: Request):
+    user = get_current_user(request)
     if user:
         return RedirectResponse(url=f"{BASE_PATH}/home")
     
@@ -144,13 +156,12 @@ async def index(request: Request):
         f"&scope=openid profile email"
     )
     
-    return templates.TemplateResponse("index.html", {
-        "request": request,
-        "auth_url": auth_url,
-        "base_path": BASE_PATH,
-        "authenticated": False,
-        "user": None
-    })
+    return RedirectResponse(url=auth_url)
+
+
+@app.get("/contact")
+async def contact(request: Request):
+    raise HTTPException(status_code=501, detail="Contacto en desarrollo")
 
 
 @app.get("/callback")

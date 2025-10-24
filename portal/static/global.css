@@ -16,7 +16,7 @@
     --success-color: #27ae60;
     --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     --shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.15);
-    --navbar-height: 60px;
+    --navbar-height: 52px;
     --sidebar-width: 250px;
     --sidebar-collapsed-width: 70px;
 }
@@ -62,7 +62,7 @@ nav.navbar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 1.5rem;
+    padding: 0 1.25rem;
     z-index: 1000;
 }
 
@@ -73,15 +73,15 @@ nav.navbar {
 }
 
 .navbar .navbar-brand {
-    font-size: 1.5rem;
+    font-size: 1.35rem;
     font-weight: 600;
     color: var(--primary-color);
     text-decoration: none;
 }
 
 .navbar .sidebar-toggle {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     background: none;
     border: none;
     cursor: pointer;
@@ -98,10 +98,9 @@ nav.navbar {
 
 .navbar .toggle-icon {
     position: relative;
-    width: 20px;
+    width: 18px;
     height: 2px;
     background-color: var(--text-primary);
-    transition: all 0.3s;
     display: block;
 }
 
@@ -113,29 +112,14 @@ nav.navbar {
     height: 2px;
     background-color: var(--text-primary);
     left: 0;
-    transition: all 0.3s;
 }
 
 .navbar .toggle-icon::before {
-    top: -7px;
+    top: -6px;
 }
 
 .navbar .toggle-icon::after {
-    bottom: -7px;
-}
-
-body.sidebar-collapsed .navbar .toggle-icon {
-    background-color: transparent;
-}
-
-body.sidebar-collapsed .navbar .toggle-icon::before {
-    transform: rotate(45deg);
-    top: 0;
-}
-
-body.sidebar-collapsed .navbar .toggle-icon::after {
-    transform: rotate(-45deg);
-    bottom: 0;
+    bottom: -6px;
 }
 
 .navbar .navbar-right {
@@ -145,8 +129,8 @@ body.sidebar-collapsed .navbar .toggle-icon::after {
 }
 
 .navbar .navbar-icon-btn {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     background: none;
     border: none;
     cursor: pointer;
@@ -163,6 +147,64 @@ body.sidebar-collapsed .navbar .toggle-icon::after {
     color: var(--primary-color);
 }
 
+.navbar .navbar-notification-menu {
+    position: relative;
+}
+
+.navbar .notification-dropdown {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    width: 320px;
+    background-color: var(--card-background);
+    border-radius: 6px;
+    box-shadow: var(--shadow-hover);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s;
+    display: none;
+}
+
+.navbar .notification-dropdown.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    display: block;
+}
+
+.navbar .notification-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.navbar .notification-header h4 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.navbar .notification-body {
+    padding: 1.5rem;
+}
+
+.navbar .notification-empty {
+    text-align: center;
+    padding: 2rem 1rem;
+}
+
+.navbar .notification-empty svg {
+    color: var(--text-secondary);
+    opacity: 0.5;
+    margin-bottom: 1rem;
+}
+
+.navbar .notification-empty p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
 .navbar .navbar-user-menu {
     position: relative;
 }
@@ -171,7 +213,7 @@ body.sidebar-collapsed .navbar .toggle-icon::after {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.5rem 0.75rem;
+    padding: 0.4rem 0.65rem;
     background: none;
     border: none;
     cursor: pointer;
@@ -184,8 +226,8 @@ body.sidebar-collapsed .navbar .toggle-icon::after {
 }
 
 .navbar .user-avatar {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     background-color: var(--primary-color);
     color: white;
@@ -193,14 +235,14 @@ body.sidebar-collapsed .navbar .toggle-icon::after {
     align-items: center;
     justify-content: center;
     font-weight: 600;
-    font-size: 0.875rem;
+    font-size: 0.8rem;
     text-transform: uppercase;
 }
 
 .navbar .user-name {
     color: var(--text-primary);
     font-weight: 500;
-    font-size: 0.9rem;
+    font-size: 0.875rem;
 }
 
 .navbar .dropdown-arrow {
@@ -273,7 +315,7 @@ aside.sidebar {
     height: calc(100vh - var(--navbar-height));
     background-color: var(--card-background);
     border-right: 1px solid var(--border-color);
-    transition: width 0.3s, transform 0.3s;
+    transition: width 0.3s;
     overflow-x: hidden;
     overflow-y: auto;
     z-index: 900;
@@ -281,24 +323,6 @@ aside.sidebar {
 
 body.sidebar-collapsed aside.sidebar {
     width: var(--sidebar-collapsed-width);
-}
-
-aside.sidebar .sidebar-header {
-    padding: 1.5rem;
-    border-bottom: 1px solid var(--border-color);
-}
-
-aside.sidebar .sidebar-title {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: var(--primary-color);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-body.sidebar-collapsed aside.sidebar .sidebar-title {
-    opacity: 0;
 }
 
 aside.sidebar .sidebar-nav {
@@ -464,6 +488,28 @@ body.sidebar-collapsed aside.sidebar .sidebar-item span {
     box-shadow: var(--shadow-hover);
 }
 
+.btn-outline {
+    background-color: transparent;
+    color: var(--primary-color);
+    border: 2px solid var(--primary-color);
+}
+
+.btn-outline:hover {
+    background-color: var(--primary-color);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+}
+
+.navbar-public .navbar-right {
+    gap: 0.75rem;
+}
+
+.navbar-public .btn-outline {
+    padding: 0.45rem 1.35rem;
+    font-size: 0.9rem;
+}
+
 /* ============================================================
    DASHBOARD
    ============================================================ */
@@ -604,6 +650,11 @@ body.sidebar-collapsed aside.sidebar .sidebar-item span {
     
     .info-list dd {
         margin-bottom: 1rem;
+    }
+
+    .notification-dropdown {
+        width: 280px;
+        right: -1rem;
     }
 }
 
