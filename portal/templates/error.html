@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Error {{ status_code }} - Portal{% endblock %}
+
+{% block content %}
+<div class="error-container">
+    <div class="error-card">
+        <div class="error-header {% if status_code == 501 %}error-501{% endif %}">
+            <h1 class="error-code">{{ status_code }}</h1>
+            <h2 class="error-title">{{ error_title }}</h2>
+        </div>
+        
+        <div class="error-body">
+            <p class="error-description">
+                {{ error_message }}
+            </p>
+            
+            <div class="error-actions">
+                <a href="{{ base_path }}/" class="btn btn-primary">Volver al Inicio</a>
+                {% if authenticated %}
+                <a href="{{ base_path }}/home" class="btn btn-secondary">Ir al Dashboard</a>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="error-footer">
+            <p class="info-text">
+                Si el problema persiste, contacte al administrador del sistema.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

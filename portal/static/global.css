@@ -606,3 +606,102 @@ body.sidebar-collapsed aside.sidebar .sidebar-item span {
         margin-bottom: 1rem;
     }
 }
+
+/* ============================================================
+   ERROR PAGE
+   ============================================================ */
+
+.error-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 60vh;
+    padding: 2rem;
+}
+
+.error-card {
+    background-color: var(--card-background);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    max-width: 600px;
+    width: 100%;
+    overflow: hidden;
+}
+
+.error-header {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+    padding: 3rem 2rem;
+    text-align: center;
+}
+
+.error-header.error-501 {
+    background: linear-gradient(135deg, #ff9800, #f57c00);
+}
+
+.error-code {
+    font-size: 4rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    line-height: 1;
+}
+
+.error-title {
+    font-size: 1.5rem;
+    font-weight: 500;
+    margin: 0;
+}
+
+.error-body {
+    padding: 2rem;
+    text-align: center;
+}
+
+.error-description {
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+    line-height: 1.6;
+    font-size: 1rem;
+}
+
+.error-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn-secondary {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #4a5561;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+}
+
+.error-footer {
+    background-color: var(--background-color);
+    padding: 1.5rem;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .error-code {
+        font-size: 3rem;
+    }
+    
+    .error-title {
+        font-size: 1.25rem;
+    }
+    
+    .error-actions {
+        flex-direction: column;
+    }
+    
+    .error-actions .btn {
+        width: 100%;
+    }
+}
