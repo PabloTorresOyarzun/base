@@ -2,12 +2,6 @@
 
 {% block title %}Dashboard - Portal{% endblock %}
 
-{% block nav %}
-<ul class="nav-list">
-    <li><a href="{{ base_path }}/logout" class="nav-link">Cerrar Sesión</a></li>
-</ul>
-{% endblock %}
-
 {% block content %}
 <div class="dashboard-container">
     <div class="welcome-section">
@@ -77,7 +71,7 @@
                 <dt>Usuario:</dt>
                 <dd>{{ user.preferred_username or 'No disponible' }}</dd>
                 
-                <dt>Nombre:</dt>Fhome
+                <dt>Nombre:</dt>
                 <dd>{{ user.name or 'No disponible' }}</dd>
             </dl>
         </div>

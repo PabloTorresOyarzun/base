@@ -63,10 +63,13 @@ async def index(request: Request):
         f"&scope=openid profile email"
     )
     
+    # ÚNICO CAMBIO: agregar authenticated y user para que funcione el navbar
     return templates.TemplateResponse("index.html", {
         "request": request,
         "auth_url": auth_url,
-        "base_path": BASE_PATH
+        "base_path": BASE_PATH,
+        "authenticated": False,
+        "user": None
     })
 
 
@@ -121,17 +124,39 @@ async def callback(request: Request, code: str):
 
 @app.get("/home", response_class=HTMLResponse)
 async def home(request: Request, user: dict = Depends(require_auth)):
+    # ÚNICO CAMBIO: agregar authenticated para que funcione el sidebar
     return templates.TemplateResponse("home.html", {
         "request": request,
         "user": user,
-        "base_path": BASE_PATH
+        "base_path": BASE_PATH,
+        "authenticated": True
     })
 
 
 @app.get("/logout")
 async def logout(request: Request):
+    # Obtener token de acceso si existe
+    access_token = request.session.get("access_token")
+    
+    # Limpiar la sesión local
     request.session.clear()
-    return RedirectResponse(url=BASE_PATH or "/")
+    
+    # Si hay token, también cerrar sesión en Keycloak
+    if access_token:
+        # Construir URL de redirección post-logout
+        # Extraer base URL del REDIRECT_URI (ej: http://localhost:8000)
+        redirect_base = REDIRECT_URI.rsplit('/callback', 1)[0]
+        post_logout_redirect = f"{redirect_base}/"
+        
+        logout_url = (
+            f"{KEYCLOAK_URL_PUBLIC}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/logout"
+            f"?post_logout_redirect_uri={post_logout_redirect}"
+            f"&client_id={KEYCLOAK_CLIENT_ID}"
+        )
+        return RedirectResponse(url=logout_url, status_code=302)
+    
+    # Si no hay token, redirigir directamente a la página de inicio
+    return RedirectResponse(url=f"{BASE_PATH}/", status_code=302)
 
 
 @app.get("/health")

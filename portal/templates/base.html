@@ -7,18 +7,70 @@
     <link rel="stylesheet" href="{{ base_path }}/static/global.css">
     {% block extra_css %}{% endblock %}
 </head>
-<body>
-    <header class="header">
-        <div class="container">
-            <h1 class="logo">Portal</h1>
-            <nav class="nav">
-                {% block nav %}{% endblock %}
-            </nav>
+<body class="{% if authenticated %}has-sidebar{% endif %}">
+    <nav class="navbar">
+        <div class="navbar-left">
+            {% if authenticated %}
+            <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+                <span class="toggle-icon"></span>
+            </button>
+            {% else %}
+            <a href="{{ base_path if base_path else '/' }}" class="navbar-brand">Portal</a>
+            {% endif %}
         </div>
-    </header>
+        
+        <div class="navbar-right">
+            <button class="navbar-icon-btn" id="notificationBtn" aria-label="Notificaciones">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M15 6.5C15 5.17392 14.4732 3.90215 13.5355 2.96447C12.5979 2.02678 11.3261 1.5 10 1.5C8.67392 1.5 7.40215 2.02678 6.46447 2.96447C5.52678 3.90215 5 5.17392 5 6.5C5 12.5 2.5 14 2.5 14H17.5C17.5 14 15 12.5 15 6.5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M11.4417 17.5C11.2952 17.7526 11.0849 17.9622 10.8319 18.1079C10.5789 18.2537 10.292 18.3304 10 18.3304C9.70802 18.3304 9.42115 18.2537 9.16813 18.1079C8.9151 17.9622 8.70484 17.7526 8.55835 17.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            
+            {% if authenticated %}
+            <div class="navbar-user-menu">
+                <button class="user-menu-trigger" id="userMenuTrigger" aria-expanded="false">
+                    <div class="user-avatar">{{ user.name[0] if user.name else user.email[0] }}</div>
+                    <span class="user-name">{{ user.preferred_username or user.email }}</span>
+                    <svg class="dropdown-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">
+                        <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <div class="user-menu-dropdown" id="userMenuDropdown">
+                    <a href="{{ base_path }}/profile" class="dropdown-item">Perfil</a>
+                    <a href="{{ base_path }}/settings" class="dropdown-item">Configuración</a>
+                    <a href="{{ base_path }}/help" class="dropdown-item">Ayuda</a>
+                    <div class="dropdown-divider"></div>
+                    <a href="{{ base_path }}/logout" class="dropdown-item">Cerrar Sesión</a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </nav>
+
+    {% if authenticated %}
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2 class="sidebar-title">Portal</h2>
+        </div>
+        <nav class="sidebar-nav">
+            {% block sidebar_nav %}
+            <a href="{{ base_path }}/home" class="sidebar-item active">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M3 7.5L10 2.5L17 7.5V16.5C17 16.8978 16.842 17.2794 16.5607 17.5607C16.2794 17.842 15.8978 18 15.5 18H4.5C4.10218 18 3.72064 17.842 3.43934 17.5607C3.15804 17.2794 3 16.8978 3 16.5V7.5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M7.5 18V10H12.5V18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Inicio</span>
+            </a>
+            {% endblock %}
+        </nav>
+    </aside>
+    {% endif %}
 
     <main class="main-content">
-        {% block content %}{% endblock %}
+        <div class="container">
+            {% block content %}{% endblock %}
+        </div>
     </main>
 
     <footer class="footer">
@@ -28,7 +80,6 @@
     </footer>
 
     <script>
-        // Helper para obtener el token CSRF de las cookies
         function getCsrfToken() {
             const name = 'csrf_token=';
             const decodedCookie = decodeURIComponent(document.cookie);
@@ -45,12 +96,46 @@
             return '';
         }
 
-        // Helper para agregar token CSRF a fetch requests
         function fetchWithCsrf(url, options = {}) {
             options.headers = options.headers || {};
             options.headers['X-CSRF-Token'] = getCsrfToken();
             return fetch(url, options);
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+            const body = document.body;
+            
+            if (sidebarToggle && sidebar) {
+                const sidebarState = localStorage.getItem('sidebarCollapsed') === 'true';
+                if (sidebarState) {
+                    body.classList.add('sidebar-collapsed');
+                }
+                
+                sidebarToggle.addEventListener('click', function() {
+                    body.classList.toggle('sidebar-collapsed');
+                    localStorage.setItem('sidebarCollapsed', body.classList.contains('sidebar-collapsed'));
+                });
+            }
+
+            const userMenuTrigger = document.getElementById('userMenuTrigger');
+            const userMenuDropdown = document.getElementById('userMenuDropdown');
+            
+            if (userMenuTrigger && userMenuDropdown) {
+                userMenuTrigger.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const isExpanded = userMenuTrigger.getAttribute('aria-expanded') === 'true';
+                    userMenuTrigger.setAttribute('aria-expanded', !isExpanded);
+                    userMenuDropdown.classList.toggle('active');
+                });
+
+                document.addEventListener('click', function() {
+                    userMenuTrigger.setAttribute('aria-expanded', 'false');
+                    userMenuDropdown.classList.remove('active');
+                });
+            }
+        });
     </script>
 
     {% block extra_js %}{% endblock %}

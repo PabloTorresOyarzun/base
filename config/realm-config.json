@@ -19,7 +19,9 @@
       "secret": "portal-secret-change-in-production",
       "redirectUris": [
         "http://localhost:8000/portal/callback",
-        "http://localhost:8100/callback"
+        "http://localhost:8100/callback",
+        "http://localhost:8000/portal/",
+        "http://localhost:8000/"
       ],
       "webOrigins": [
         "http://localhost:8000",
@@ -46,6 +48,7 @@
         "microprofile-jwt"
       ],
       "attributes": {
+        "post.logout.redirect.uris": "http://localhost:8000/portal/+##http://localhost:8000/+##http://localhost:8100/",
         "access.token.lifespan": "1800",
         "client.session.idle.timeout": "1800",
         "client.session.max.lifespan": "36000"
